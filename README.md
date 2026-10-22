@@ -1,6 +1,5 @@
 claude code actionsをMAXプランで無料利用するために必要なリポジトリ
 
-
 # Claude Max Code Base Action
 
 > **🎉 Use Your Claude Max Subscription in GitHub Actions!**

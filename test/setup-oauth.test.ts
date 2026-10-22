@@ -1,13 +1,35 @@
 #!/usr/bin/env bun
 
-import { describe, test, expect, afterEach } from "bun:test";
+import {
+  describe,
+  test,
+  expect,
+  beforeAll,
+  afterAll,
+  afterEach,
+  spyOn,
+} from "bun:test";
 import { setupOAuthCredentials } from "../src/setup-oauth";
-import { readFile, unlink, access } from "fs/promises";
+import { mkdtempSync } from "fs";
+import { readFile, unlink, access, rm } from "fs/promises";
 import { join } from "path";
-import { homedir } from "os";
+import * as os from "os";
 
 describe("setupOAuthCredentials", () => {
-  const credentialsPath = join(homedir(), ".claude", ".credentials.json");
+  const testDirectory = mkdtempSync(
+    join(os.tmpdir(), "claude-code-base-action-test-"),
+  );
+  const credentialsPath = join(testDirectory, ".claude", ".credentials.json");
+  const homedirSpy = spyOn(os, "homedir").mockReturnValue(testDirectory);
+
+  beforeAll(() => {
+    expect(os.homedir()).toBe(testDirectory);
+  });
+
+  afterAll(async () => {
+    homedirSpy.mockRestore();
+    await rm(testDirectory, { recursive: true, force: true });
+  });
 
   afterEach(async () => {
     // Clean up the credentials file after each test
@@ -84,8 +106,7 @@ describe("setupOAuthCredentials", () => {
   });
 
   test("should create .claude directory if it doesn't exist", async () => {
-    // This test is implicitly covered by the other tests, but we can verify
-    // that the function doesn't fail even when the directory doesn't exist
+    await rm(join(testDirectory, ".claude"), { recursive: true, force: true });
     const credentials = {
       accessToken: "test-token",
       refreshToken: "test-refresh",
